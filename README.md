@@ -344,6 +344,164 @@ FFT implementation example code with a successful plot output.
 
 <img width="1661" height="986" alt="Screenshot (268)" src="https://github.com/user-attachments/assets/d708d951-da8b-478c-b032-2552374ce9ba" />
 
+# IQ Sampling
+We also cover Nyquist sampling, complex numbers, RF carriers, downconversion, and power spectral density. IQ sampling is the form of sampling that an SDR performs, as well as many digital receivers (and transmitters).
+
+## Sampling Basics
+
+The microphone is a transducer that converts sound waves into an electric signal (a voltage level). That electric signal is transformed by an analog-to-digital converter (ADC), producing a digital representation of the sound wave. To simplify, the microphone captures sound waves that are converted into electricity, and that electricity in turn is converted into numbers. 
+
+Whether we are dealing with audio or radio frequencies, we must sample if we want to capture, process, or save a signal digitally.Let’s say we have some random function,s(t) 
+, which could represent anything, and it’s a continuous function that we want to sample:
+
+![](https://pysdr.org/_images/sampling.svg)
+
+We record the value of at regular intervals of seconds, known as the sample period. The frequency at which we sample, i.e., the number of samples taken per second, is simply . We call this the sample rate, and it’s the inverse of the sample period.
+
+## Nyquist Sampling
+The Nyquist Sampling Theorem (also called the Shannon–Nyquist theorem) states that:
+
+A continuous-time signal can be perfectly reconstructed from its samples if it is sampled at a rate that is at least twice the maximum frequency present in the signal.
+
+###### Key Points:
+
+1.Sampling Rate ≥ 2 × f<sub>max</sub>
+
+- If a signal’s highest frequency component is f<sub>max</sub>, then the minimum sampling rate must be 2fmax.
+
+- This minimum rate is called the Nyquist Rate
+
+2.Nyquist Frequency
+
+- It is equal to half of the sampling rate (f<sub>s</sub>/2).
+
+- This is the highest frequency that can be correctly represented.
+
+3.Aliasing
+
+- If the signal is sampled below the Nyquist rate, different frequency components overlap and distort each other.
+
+- This effect is called aliasing
+
+4.Practical Use
+
+In digital communication, SDR, and DSP, Nyquist sampling ensures that no information is lost when converting an analog signal to digital form.
+
+## Quadrature Sampling
+
+Quadrature Sampling (also called Complex Sampling or IQ Sampling) is a method of representing a bandpass signal by mixing it with two sinusoids that are 90° out of phase:
+
+- In-phase (I): Signal × cos(2πf<sub>c</sub>t)
+
+- Quadrature (Q): Signal × sin(2πf<sub>c</sub>t)
+
+![](https://pysdr.org/_images/IQ_wave.png)
+
+The two outputs (I and Q) together form a complex baseband signal:
+
+x(t)=I(t)+jQ(t)
+This allows a high-frequency bandpass signal to be shifted down to baseband for easy digital processing.
+
+# Complex Numbers
+
+the IQ convention is an alternative way to represent magnitude and phase, which leads us to complex numbers and the ability to represent them on a complex plane. 
+
+![](https://pysdr.org/_images/complex_plane_1.png)
+
+phase is the angle between the vector and 0 degrees, which we define as the positive real axis:
+
+![](https://pysdr.org/_images/complex_plane_2.png)
+
+<img width="1543" height="896" alt="Screenshot (271)" src="https://github.com/user-attachments/assets/9a9e7f4d-45d1-44ea-985d-05041675b7d9" />
+
+# Complex Numbers in FFTs
+
+ When you take the FFT of a series of samples, it finds the frequency domain representation. We talked about how the FFT figures out which frequencies exist in that set of samples (the magnitude of the FFT indicates the strength of each frequency). But what the FFT also does is figure out the delay (time shift) needed to apply to each of those frequencies, so that the set of sinusoids can be added up to reconstruct the time-domain signal. That delay is simply the phase of the FFT. The output of an FFT is an array of complex numbers, and each complex number gives you the magnitude and phase, and the index of that number gives you the frequency. 
+
+ # Receiver Side
+
+ the perspective of a radio receiver that is trying to receive a signal (e.g., an FM radio signal). Using IQ sampling, the diagram now looks like:
+
+ ![](https://pysdr.org/_images/IQ_diagram_rx.png)
+
+ What comes in is a real signal received by our antenna, and those are transformed into IQ values.using two ADCs, and then we combine the pairs and store them as complex numbers. In other words, at each time step, you will sample one I value and one Q value and combine them in the form I+JQ (i.e., one complex number per IQ sample). There will always be a “sample rate”, the rate at which sampling is performed. Someone might say, “I have an SDR running at 2 MHz sample rate.Throughout this textbook you will become very familiar with how IQ samples work, how to receive and transmit them with an SDR, how to process them in Python, and how to save them to a file for later analysis
+
+# Carrier and Downconversion
+#### Carrier:
+- A carrier is a high-frequency sinusoidal signal (cosine or sine wave) used to carry information in communication systems.
+
+- Mathematically:
+C(t)= A cos(2pieft+fie)
+
+where is the carrier frequency. 
+
+- In modulation (AM, FM, QAM etc.), the baseband information (voice, data, video) is superimposed on the carrier.
+
+- Example: FM radio at 100 MHz → the 100 MHz sine wave is the carrier.
+
+#### Downconversion:
+- Downconversion is the process of shifting a high-frequency signal (RF, bandpass) down to a lower frequency (baseband or IF) so it can be easily processed.
+
+- It is done by mixing the signal with a carrier (local oscillator, LO) inside a receiver.
+
+- the RF signal is shifted to baseband (centered at 0 Hz).
+
+- This is the essence of quadrature downconversion (I/Q sampling) in SDRs.
+
+
+# Receiver Architectures
+Receiver Architecture is the systematic design and organization of different functional blocks in a communication receiver that process incoming radio frequency (RF) signals and recover the original transmitted information. It defines how signals move through the receiver—from the antenna, through amplification, filtering, frequency downconversion, and analog-to-digital conversion—before being processed in the digital domain (DSP).
+
+It specifies the signal flow, the role of each stage (RF front-end, mixer, local oscillator, baseband processing), and the trade-offs in sensitivity, selectivity, noise, complexity, and cost.
+
+![](https://pysdr.org/_images/receiver_arch_diagram.svg)
+
+# Baseband and Bandpass Signals
+The difference between baseband and bandpass signals, which are fundamental concepts in radio communication.
+
+### Baseband Signals
+
+A baseband signal is a signal centered around 0 Hz. It represents the raw data, like an audio signal or the output of a downconverted radio signal. Because it's at a low frequency, it requires a lower sample rate to capture, making it efficient to work with on a computer.
+
+### Bandpass Signals
+
+A bandpass signal is a signal that exists at some higher radio frequency (RF), away from 0 Hz. This is the type of signal that is actually transmitted through the air (e.g., Wi-Fi, FM radio). Bandpass signals are always real and do not contain imaginary components, as you cannot transmit imaginary data.
+
+![](https://pysdr.org/_images/baseband_bandpass.png)
+
+# DC Spike and Offset Tuning
+
+### 1.DC Spike
+
+- In SDR receivers (especially direct conversion receivers), the Local Oscillator (LO) leaks into the mixer, producing a constant DC component at 0 Hz in the spectrum.
+
+- When you look at the FFT of the signal, it shows up as a tall spike exactly at DC (0 Hz).
+
+- This spike is not a real signal—it’s an artifact of the hardware.
+
+👉 Example: If you tune your SDR to 100.0 MHz, you may see a big spike at the center of the spectrum (0 Hz relative). That’s the DC spike.
+
+### 2.Offset Tuning
+
+- To avoid the DC spike interfering with your signal of interest, SDRs often use offset tuning.
+
+- In offset tuning, instead of tuning the LO exactly at the desired frequency, the LO is shifted (offset) by a small amount.
+
+- The signal of interest is received away from DC, and later in digital processing it is shifted back to the correct frequency.
+
+👉 This moves the DC spike out of the way, so the actual signal is not corrupted.
+
+![](https://pysdr.org/_images/dc_spike.png)
+
+![](https://pysdr.org/_images/offtuning.png)
+
+  
+ 
+ 
+ 
+
+
+
 
 
 
